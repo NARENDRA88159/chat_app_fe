@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axiosWithHeaders from "../Helper/axiosWithHeaders";
+import { apis } from "../api";
+import toast from "react-hot-toast";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -9,10 +12,24 @@ export default function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    console.log("Signup Data:", formData);
-    navigate("/");
+    try {
+      const response = await axiosWithHeaders.post(`${apis.SIGN_UP}`, formData)
+      if (response.status == 400) {
+        toast.success("already email is exist")
+      }
+      toast.success("successful sign up")
+      console.log(response)
+      navigate('/')
+    } catch (e) {
+      console.log("eee",e.response.status)
+      if (e.response.status== 400) {
+        toast.error("already email is exist")
+      }
+
+    }
+
   };
 
   return (

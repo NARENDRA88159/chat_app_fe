@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axiosWithHeaders from "../Helper/axiosWithHeaders";
+import { apis } from "../api";
+import toast from "react-hot-toast";
 
 export default function Login() {
+  const navigate=useNavigate()
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -10,9 +14,21 @@ export default function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    console.log("Login Data:", formData);
+    try {
+      const response = await axiosWithHeaders.post(`${apis.LOGIN}`, formData)
+
+      toast.success("successful login up")
+      console.log(response)
+      navigate('/Home')
+    } catch (e) {
+      console.log("eee",e.response.status)
+      if (e.response.status== 400) {
+        toast.error(" email is not exist")
+      }
+
+    }
   };
 
   return (
