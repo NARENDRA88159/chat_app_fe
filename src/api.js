@@ -25,7 +25,10 @@ export const apis = {
     // Auth
     BASE_URL: baseurl,
   SIGN_UP: `${baseurl}/api/user/signUp`,
-  LOGIN:`${baseurl}/api/user/login`,
+  LOGIN: `${baseurl}/api/user/login`,
+  GETALLMESSAGES: `${baseurl}/api/userMessage/getAllMessages`,
+  CREATMESSAGE:`${baseurl}/api/userMessage/createMessage`,
+
 
 
 }
