@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosWithHeaders from "../Helper/axiosWithHeaders";
 import { apis } from "../api";
 import toast from "react-hot-toast";
+import Cookies from "js-cookie"
 
 export default function Login() {
   const navigate=useNavigate()
@@ -21,6 +22,7 @@ export default function Login() {
 
       toast.success("successful login up")
       console.log(response)
+      Cookies.set("token",response.data?.token)
       navigate('/Home')
     } catch (e) {
       console.log("eee",e.response.status)
