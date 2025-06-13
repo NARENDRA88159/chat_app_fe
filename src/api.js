@@ -30,6 +30,8 @@ export const apis = {
   CREATMESSAGE: `${baseurl}/api/userMessage/createMessage`,
   UPDATEMESSAGE: `${baseurl}/api/userMessage/updateMessages`,
   DELETEMESSAGE: `${baseurl}/api/userMessage/deleteMessages`,
+  AUDIOMESSAGE: `${baseurl}/api/userMessage/audio`,
+
 
 
 

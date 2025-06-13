@@ -10,6 +10,7 @@ import { RiArrowDownSLine } from 'react-icons/ri'
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MessageUpdateModal from '../Components/Modals/Message_Update_Modal'
+import VoiceRecorder from '../Components/VoiceRecorder'
 
 const Main = () => {
     const [data, setData] = useState([])
@@ -42,6 +43,12 @@ useEffect(() => {
         })
         socket.on("message", (message) => {
             console.log("ssssssssssssss", message)
+            setData((pre)=>([...pre,message]))
+        })
+
+        socket.on("SendAudioMessage", (message) => {
+            console.log("SendAudioMessageSendAudioMessage",message)
+
             setData((pre)=>([...pre,message]))
         })
 
@@ -81,6 +88,7 @@ useEffect(() => {
             socket.off("connect");
             socket.off("message");
             socket.off("disconnect");
+            socket.off("SendAudioMessage")
         }
     }, [])
 
@@ -165,6 +173,23 @@ const handleClose = () => {
         }
     }
 
+    const [messages, setMessages] = useState([]);
+
+    const handleSendAudio = async(audioBlob, audioUrl) => {
+
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'voice-message.webm');
+      formData.append('sender_id', decodejwt?.user_id);
+      formData.append('sender_email', decodejwt?.email);
+
+        const response = await axiosWithHeaders.post(`${apis?.AUDIOMESSAGE}`, formData);
+        console.log("responseresponseresponseresponseresponse",response)
+
+        socket.emit("SendAudioMessage",response?.data?.message)
+
+
+    };
+
 
     return (
         <div className='w-full min-h-[100vh] bg-gray-100 bg-[url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")] bg-repeat'>
@@ -172,13 +197,16 @@ const handleClose = () => {
                 <Header/>
             </div>
             <div className='px-4 pt-2 pb-16 max-h-[85vh] overflow-y-auto'>
-            {data && data.map((item) => {
+            {data && data.map((item,idx) => {
     const isOwnMessage = decodejwt?.user_id === item?.sender_id;
     const isHovered = hoverId === item._id;
     const isSelected = selectedMessageId === item._id;
 
-    return (
-        <div key={item._id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} mb-4`}>
+                return (
+
+
+                        <div key={item._id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} mb-4`}>
+                          {item?.audio != null  ?  <audio key={idx} controls src={item?.audio} className="w-[48vw]" /> :
             <div className='flex items-center relative'
                 onMouseEnter={() => setHoverId(item._id)}
                 onMouseLeave={() => setHoverId(null)}
@@ -237,10 +265,11 @@ const handleClose = () => {
 
                     </Menu>
                 )}
-            </div>
+            </div>}
         </div>
     );
-})}
+            })}
+
 
                 <div ref={messagesEndRef} />
 
@@ -256,6 +285,7 @@ const handleClose = () => {
                     placeholder="Type a message"
                     rows={1}
                 />
+                <VoiceRecorder onSendAudio={handleSendAudio} />
                 <button
                     className='ml-2 w-10 h-10 rounded-full flex justify-center items-center bg-green-500 text-white hover:bg-green-600'
                     onClick={handleSendMessage}
