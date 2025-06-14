@@ -11,6 +11,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MessageUpdateModal from '../Components/Modals/Message_Update_Modal'
 import VoiceRecorder from '../Components/VoiceRecorder'
+import { FiPaperclip } from 'react-icons/fi'
+import UploadModal from '../Components/Modals/Upload_image_Modal'
 
 const Main = () => {
     const [data, setData] = useState([])
@@ -43,6 +45,11 @@ useEffect(() => {
         })
         socket.on("message", (message) => {
             console.log("ssssssssssssss", message)
+            setData((pre)=>([...pre,message]))
+        })
+
+        socket.on("UploadImage", (message) => {
+
             setData((pre)=>([...pre,message]))
         })
 
@@ -89,6 +96,7 @@ useEffect(() => {
             socket.off("message");
             socket.off("disconnect");
             socket.off("SendAudioMessage")
+            socket.off("UploadImage")
         }
     }, [])
 
@@ -189,6 +197,31 @@ const handleClose = () => {
 
 
     };
+    const [openImageUpload, setOpenmageUpload] = useState(false);
+
+    const handleUploadImage = async (file) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('sender_id',decodejwt?.user_id );
+      formData.append('sender_email', decodejwt?.email);
+
+      try {
+        const res = await axiosWithHeaders.post(`${apis?.IMAGEMESSAGE}`, formData);
+          console.log('Uploaded:', res.data);
+
+          socket.emit("UploadImage",res?.data?.message)
+      } catch (err) {
+        console.error('Upload error:', err);
+      }
+    };
+
+const [selectImage,setSelectImage]=useState(null)
+    const handlefileupload = async () => {
+
+        setOpenmageUpload(true)
+
+
+    }
 
 
     return (
@@ -206,7 +239,12 @@ const handleClose = () => {
 
 
                         <div key={item._id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} mb-4`}>
-                          {item?.audio != null  ?  <audio key={idx} controls src={item?.audio} className="w-[48vw]" /> :
+                        {item?.audio != null ? <audio key={idx} controls src={item?.audio} className="w-[48vw]" /> :
+                            item?.image != null ?
+                                <div className='w-[48vw] h-[30vh] '>
+                            <img className='w-full h-full object-cover'  key={idx} src={item?.image} alt="uploaded image" />
+                            </div>:
+
             <div className='flex items-center relative'
                 onMouseEnter={() => setHoverId(item._id)}
                 onMouseLeave={() => setHoverId(null)}
@@ -286,6 +324,13 @@ const handleClose = () => {
                     rows={1}
                 />
                 <VoiceRecorder onSendAudio={handleSendAudio} />
+                <label htmlFor="file-upload">
+  <div className='w-10 h-10 rounded-full flex justify-center items-center bg-[#FFD9C0] mx-2 cursor-pointer' onClick={handlefileupload}>
+    <FiPaperclip size={20} />
+  </div>
+</label>
+
+
                 <button
                     className='ml-2 w-10 h-10 rounded-full flex justify-center items-center bg-green-500 text-white hover:bg-green-600'
                     onClick={handleSendMessage}
@@ -302,6 +347,10 @@ const handleClose = () => {
                 selectMessageData={selectMessageData}
 
             />
+            <UploadModal
+                open={openImageUpload}
+                onClose={() => setOpenmageUpload(false)}
+                onUpload={handleUploadImage} />
         </div>
     )
 }
