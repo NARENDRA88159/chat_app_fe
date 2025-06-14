@@ -31,6 +31,7 @@ export const apis = {
   UPDATEMESSAGE: `${baseurl}/api/userMessage/updateMessages`,
   DELETEMESSAGE: `${baseurl}/api/userMessage/deleteMessages`,
   AUDIOMESSAGE: `${baseurl}/api/userMessage/audio`,
+  IMAGEMESSAGE: `${baseurl}/api/userMessage/images`,
 
 
 
