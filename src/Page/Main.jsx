@@ -20,24 +20,70 @@ const Main = () => {
     const socket = io(import.meta.env.VITE_APP_LOCAL_API_URL)
     const messagesEndRef = useRef(null)
     const dataRef = useRef([]);
+    const [page, setPage] = useState(1);
+const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const messagesContainerRef = useRef(null); // Add this ref
+
+const fetchMessages = async (pageNum = 1) => {
+    let prevScrollHeight, prevScrollTop;
+    if (messagesContainerRef.current && pageNum !== 1) {
+        prevScrollHeight = messagesContainerRef.current.scrollHeight;
+        prevScrollTop = messagesContainerRef.current.scrollTop;
+    }
+    setLoading(true);
+    try {
+        const response = await axiosWithHeaders.post(`${apis?.GETALLMESSAGES}?limit=20&page=${pageNum}`);
+        const newMessages = response?.data || [];
+        if (pageNum === 1) {
+            setData(newMessages);
+        } else {
+            setData(prev => [...newMessages, ...prev]);
+        }
+        if (newMessages.length < 20) setHasMore(false);
+    } catch (error) {
+        setHasMore(false);
+    }
+    setLoading(false);
+
+    // Restore scroll position after loading older messages
+    if (messagesContainerRef.current && pageNum !== 1 && prevScrollHeight !== undefined) {
+        setTimeout(() => {
+            const newScrollHeight = messagesContainerRef.current.scrollHeight;
+            messagesContainerRef.current.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
+        }, 1);
+    }
+};
+    // Initial load
+    useEffect(() => {
+        fetchMessages(1);
+    }, []);
+
+    // Infinite scroll handler
+    const handleScroll = (e) => {
+        if (e.target.scrollTop === 0 && hasMore && !loading) {
+            fetchMessages(page + 1);
+            setPage(prev => prev + 1);
+        }
+    };
 
 useEffect(() => {
     dataRef.current = data;
 }, [data]);
 
-    useEffect(() => {
-        const allMessages = async () => {
-            try {
-                const response = await axiosWithHeaders.post(`${apis?.GETALLMESSAGES}`);
-                console.log(response.data, "sssssssss");
-                setData(response?.data)
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-            }
-        };
+    // useEffect(() => {
+    //     const allMessages = async () => {
+    //         try {
+    //             const response = await axiosWithHeaders.post(`${apis?.GETALLMESSAGES}`);
+    //             console.log(response.data, "sssssssss");
+    //             setData(response?.data)
+    //         } catch (error) {
+    //             console.error("Error fetching messages:", error);
+    //         }
+    //     };
 
-        allMessages();
-    }, [])
+    //     allMessages();
+    // }, [])
 
     useEffect(() => {
         socket.on("connect", () => {
@@ -99,10 +145,14 @@ useEffect(() => {
             socket.off("UploadImage")
         }
     }, [])
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [data])
+    const [prevDataLength, setPrevDataLength] = useState(0);
+    // useEffect(() => {
+    //     // Only scroll if a new message is added at the end (not when loading older messages)
+    //     if (data.length > prevDataLength) {
+    //         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    //     }
+    //     setPrevDataLength(data.length);
+    // }, [data]);
 
     const token = Cookies.get("token")
     const decodejwt = decodeJwtToken(token)
@@ -229,7 +279,9 @@ const [selectImage,setSelectImage]=useState(null)
             <div className='sticky top-0 z-10'>
                 <Header/>
             </div>
-            <div className='px-4 pt-2 pb-16 max-h-[85vh] overflow-y-auto'>
+            <div className='px-4 pt-2 pb-16 max-h-[85vh] overflow-y-auto'  onScroll={handleScroll}
+        ref={messagesContainerRef}
+        >
             {data && data.map((item,idx) => {
     const isOwnMessage = decodejwt?.user_id === item?.sender_id;
     const isHovered = hoverId === item._id;
@@ -309,7 +361,7 @@ const [selectImage,setSelectImage]=useState(null)
             })}
 
 
-                <div ref={messagesEndRef} />
+                {/* <div ref={messagesEndRef} /> */}
 
 
             </div>
